@@ -15,14 +15,14 @@ class Buffer{
 
         size_t GetLength();
 
-        
+        void Append(std::string edit);
 
     private:
         std::string buffer;
 
         std::string ReadBuffer(const char* filename);
 
-        void Append(std::string edit);
+        
 };
 
 

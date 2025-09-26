@@ -7,7 +7,7 @@ PieceTable::PieceTable(const char* filename){
     add = Buffer();
 
     root = new PTNode;
-    root->color = PieceTable::Color::Black;
+    root->color = Color::Black;
     root->start_index=0;
     root->length = original.GetLength();
     root->subtree_len=original.GetLength();
@@ -20,9 +20,9 @@ void PieceTable::Add(std::string edit, size_t document_location)
     add.Append(edit);
     size_t subtree_len = 0;
 
-    PTNode* new_node;
-    new_node->bufferType = PieceTable::BufferType::ADD;
-    new_node->color = PieceTable::Color::Red;
+    PTNode* new_node = new PTNode;
+    new_node->bufferType = BufferType::ADD;
+    new_node->color = Color::Red;
     new_node->length = length;
     new_node->start_index = start_index;
 }

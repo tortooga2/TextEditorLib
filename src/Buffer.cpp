@@ -15,9 +15,10 @@ std::string Buffer::ReadBuffer(const char* filename){
 
     return std::string(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()); 
 }
+
 void Buffer::Append(std::string edit)
 {
-    add += edit;
+    buffer += edit;
 };
 
 void Buffer::ShowBuffer(){

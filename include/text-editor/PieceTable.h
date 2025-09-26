@@ -6,9 +6,12 @@
 
 // TODO I need three data structures, my buffers, my table, and then a tree to let me walk through my table and find the entries that need to be updated quickly
 
+enum class BufferType {OG, ADD};
+enum class Color {Red, Black};
+
 
 struct PTNode{
-    PieceTable::BufferType bufferType = PieceTable::BufferType::OG; //This will consist of two possible types, either the "Add" or "Original" Buffer
+    BufferType bufferType = BufferType::OG; //This will consist of two possible types, either the "Add" or "Original" Buffer
     
     size_t start_index; // This is the start of the new 
     size_t length;
@@ -19,7 +22,7 @@ struct PTNode{
     PTNode *left = nullptr;
     PTNode *right = nullptr;
 
-    PieceTable::Color color = PieceTable::Color::Red;
+    Color color = Color::Red;
 };
 
 class PieceTable{
@@ -32,8 +35,7 @@ class PieceTable{
 
     public:
 
-        enum class BufferType {OG, ADD};
-        enum class Color {Red, Black};
+
 
         PieceTable(const char* filename);
 
