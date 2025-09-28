@@ -29,3 +29,10 @@ size_t Buffer::GetLength(){
     return buffer.length();
 };
 
+
+std::string Buffer::GetString(size_t start_index, size_t length)
+{
+    return buffer.substr(start_index, length);
+};
+
+

@@ -5,6 +5,7 @@
 #include <iterator>
 #include <string>
 
+enum class BufferType {OG, ADD};
 
 class Buffer{
     public:
@@ -14,6 +15,8 @@ class Buffer{
         void ShowBuffer();
 
         size_t GetLength();
+
+        std::string GetString(size_t start_index, size_t length);
 
         void Append(std::string edit);
 
