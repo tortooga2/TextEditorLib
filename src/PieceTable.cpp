@@ -109,32 +109,9 @@ void PieceTable::RBInsert(PTNode* new_node, PTNode* current_node ,size_t p)
         SplitNode(current_node, new_left, new_right, local);
         new_left->parent = new_node;
         new_right->parent = new_node;
-
-
-
-
-        
         new_node->left = new_left;
         new_node->right = new_right;
-        
-        
-        // if(new_left->length == 0){
-            
-        //     cout << "attempting to remove left node " << new_left << endl;
-        //     if(new_left->left){
-        //         new_node->left = new_left->left;
-        //         new_left->left->parent = new_node;
-        //     }
-        //     delete new_left;
-        // }
-        // if(new_right->length == 0){
-        //     cout << "attempting to remove right node " << new_right << endl;
-        //     if(new_right->right){
-        //         new_node->right = new_right->right;
-        //         new_right->right->parent = new_node;
-        //     }
-        //     delete new_right;
-        // }
+
 
         new_node->calcSubtreeLength();
 
