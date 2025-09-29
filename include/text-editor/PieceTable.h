@@ -18,14 +18,18 @@ struct PTNode{
     size_t start_index; // This is the start of the new 
     size_t length;
 
-    size_t subtree_len = 0;
+    size_t subtree_len;
 
-    PTNode *parent = nullptr;
-    PTNode *left = nullptr;
-    PTNode *right = nullptr;
+    PTNode *parent;
+    PTNode *left;
+    PTNode *right;
 
     Color color = Color::Red;
 
+    void SetLeft(PTNode* x) {left = x;}
+    void SetRight(PTNode* x) {right = x;}
+    PTNode* GetParent() {return parent;}
+    
 
 
     void Print(std::string content){
@@ -34,12 +38,7 @@ struct PTNode{
         <<", parent: " << parent << ", Content: " << content << std::endl;
     };
 
-    void calcSubtreeLength(){
-        subtree_len = left->subtree_len + length + right->subtree_len;
-        if(parent){
-            parent->calcSubtreeLength();
-        }
-    }
+   
 };
 
 class PieceTable{
@@ -47,6 +46,7 @@ class PieceTable{
         Buffer original;
         
         PTNode* root;
+        PTNode* NIL;
 
         void RotateLeft(PTNode* x);
         void RotateRight(PTNode* x);
@@ -54,9 +54,28 @@ class PieceTable{
 
         void RBInsert(PTNode* new_node, PTNode* current_node, size_t p);
 
-        void SplitNode(PTNode *currentNode, PTNode *leftNode, PTNode *rightNode, size_t p);
+        void SplitNode(PTNode *currentNode, size_t p);
         
         void DisplayTree(PTNode* currentNode);
+
+        void calcSubtreeLength(PTNode* n){
+            if(!n || n == NIL) return;
+
+            size_t new_subtree = 0;
+            if(n->left && n->left != NIL){
+                new_subtree += n->left->subtree_len;
+            }
+            std::cout << "Break point" << std::endl;
+            if(n->right && n->right != NIL){
+                new_subtree += n->right->subtree_len;
+            }
+            new_subtree += n->length;
+            
+            n->subtree_len = new_subtree;
+            if(n->parent){
+                calcSubtreeLength(n->parent);
+            }
+        }
 
 
 

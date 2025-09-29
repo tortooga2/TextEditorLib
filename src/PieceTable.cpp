@@ -6,11 +6,16 @@ PieceTable::PieceTable(const char* filename){
     original = Buffer(filename);
     add = Buffer();
 
+    NIL = new PTNode;
+    NIL->color = Color::Black;
+
     root = new PTNode;
     root->color = Color::Black;
     root->start_index=0;
     root->length = original.GetLength();
     root->subtree_len=original.GetLength();
+    root->right = NIL;
+    root->left = NIL;
 }
 
 void PieceTable::Add(std::string edit, size_t document_location)
@@ -26,6 +31,8 @@ void PieceTable::Add(std::string edit, size_t document_location)
     new_node->length = length;
     new_node->start_index = start_index;
     new_node->subtree_len = edit.length();
+    new_node->left = NIL;
+    new_node->right = NIL;
     
 
     RBInsert(new_node, root, document_location);
@@ -41,126 +48,85 @@ std::string PieceTable::GetNodesString(PTNode *node)
     }
 }
 
-void PieceTable::RBInsert(PTNode* new_node, PTNode* current_node ,size_t p)
+void PieceTable::RBInsert(PTNode* new_node, PTNode* currentNode ,size_t p)
 {
+    //First we need to find the node where 0 < p < subtree_len or nil
+    //Step 1: Check if p is within subtree length
+    //we have three things to check.
 
-    if(current_node == nullptr){
-        return;
-    }
+    currentNode->Print("current node");
+    new_node->Print("new node");
+    
+    size_t L = currentNode->left != NIL ? currentNode->left->subtree_len : 0;
+    size_t R = L + currentNode->length;
+    cout << "Got my shit!"  << endl;
 
-
-    size_t L = current_node->left ? current_node->left->subtree_len : 0;
-    size_t R = L + current_node->length;
-
-    if(p < L){
-        //if the current node is a leaf
-        if(!current_node->left){
-            new_node->parent = current_node;
-            new_node->subtree_len = new_node->length;
-            current_node->left = new_node;
-            RBInsertFixup(new_node);
+    if(p <= L){
+        cout << "Flag first condition" << endl;
+        size_t local_p = p;
+        if(currentNode->left != NIL) RBInsert(new_node, currentNode->left, local_p);
+        else if(currentNode->left == NIL){
+            cout << "ELSE/IF 1" << endl;
+            currentNode->left = new_node;
+            
+            new_node->parent = currentNode;
+            cout << "ELSE/IF 2" << endl;
+            
+            calcSubtreeLength(new_node);
+            cout << "ELSE/IF 3" << endl;
+            
             return;
         }
-        RBInsert(new_node, current_node->left, p);
         
-    }
-    else if(p >= R){
-        size_t new_p = p - R;
-
-        //if the current node is a leaf
-        if(!current_node->right){
-            new_node->parent = current_node;
-            new_node->subtree_len = new_node->length;
-            current_node->right = new_node;
-            RBInsertFixup(new_node);
-            return; 
+    }else if(p >= R){
+        cout << "Flag second condition" << endl;
+        size_t local_p = p - R;
+        if(currentNode->right != NIL) RBInsert(new_node, currentNode->right, local_p);
+        else if(currentNode->right == NIL){
+            currentNode->right = new_node;
+            new_node->parent = currentNode;
+            calcSubtreeLength(new_node);
+            return;
         }
-        RBInsert(new_node, current_node->right, new_p);
         
+    }else{
+        
+        size_t k         = p - L;                    // 1 <= k <= old_len-1
+        size_t old_len   = currentNode->length;
+        size_t old_start = currentNode->start_index;
+        auto old_buf   = currentNode->bufferType;
+
+        currentNode->length = k;                     // left piece
+        // currentNode->start_index stays old_start
+
+        size_t right_node_len   = old_len - k;
+        size_t right_startIndex = old_start + k;
+
+        cout << "This all worked so far" << endl;
+
+        PTNode* right_node = new PTNode;
+        right_node->length = right_node_len;
+        right_node->start_index = right_startIndex;
+        right_node->right = NIL;
+        right_node->left = NIL;
+        right_node->bufferType = currentNode->bufferType;
+        right_node->color = Color::Red;
+
+        size_t right_local_p = p + new_node->length;
+        size_t new_local_p = p;
+
+        
+
+        RBInsert(new_node, currentNode, new_local_p);
+        RBInsert(right_node, currentNode, right_local_p);
     }
-    else{
 
-        //TODO Finish up the split action!
-        PTNode* new_left = new PTNode;
-        PTNode* new_right = new PTNode;
+    calcSubtreeLength(currentNode);
 
-
-        //Replace current node with
-        if(current_node->parent){
-            if(current_node->parent->left && current_node->parent->left == current_node){
-                current_node->parent->left = new_node;
-            }else if(current_node->parent->right && current_node->parent->right == current_node){
-                current_node->parent->right = new_node;
-            }
-            //Set new nodes parent to the 
-            new_node->parent = current_node->parent;
-        }else{
-            //this is a root node;
-            root = new_node;
-            new_node->color = Color::Black;
-            //Keep new_node's parent nullptr;
-        }
-
-        
-
-        size_t local_L = current_node->left ? current_node->left->subtree_len : 0;
-        size_t local = p - local_L; 
-        //Now we create our left and right nodes after splitting our node.
-        SplitNode(current_node, new_left, new_right, local);
-        new_left->parent = new_node;
-        new_right->parent = new_node;
-        new_node->left = new_left;
-        new_node->right = new_right;
-
-
-        new_node->calcSubtreeLength();
-
-        RBInsertFixup(new_node);
-        RBInsertFixup(new_left);
-        RBInsertFixup(new_right);
-        delete current_node;
-        
-
-    }
-    
 }
 
-void PieceTable::SplitNode(PTNode *currentNode, PTNode *leftNode, PTNode *rightNode, size_t p)
+void PieceTable::SplitNode(PTNode *currentNode, size_t p)
 {
-    //copy buffer type
-    leftNode->bufferType = currentNode->bufferType;
-    rightNode->bufferType = currentNode->bufferType;
-    //copy child nodes
-    leftNode->left = currentNode->left;
-    rightNode->right = currentNode->right;
-
-    if(currentNode->left)
-    currentNode->left->parent = leftNode;
-    if(currentNode->right)
-    currentNode->right->parent = rightNode;
-
-    leftNode->length = p;
-    leftNode->start_index = currentNode->start_index;
-    
-    rightNode->length = currentNode->length - p;
-    rightNode->start_index = currentNode->start_index + p;
-    
-    size_t l = (leftNode->left ? leftNode->left->subtree_len : 0);
-    size_t r = (currentNode->right ? currentNode->right->subtree_len : 0);
-    leftNode->subtree_len =  l + leftNode->length;
-    rightNode->subtree_len = r + rightNode->length;
-
-    // if(rightNode->length == 0){
-    //     rightNode = rightNode->right;
-    //     rightNode->parent = currentNode;
-    // }
-
-    // if(leftNode->length == 0){
-    //     leftNode = leftNode->left;
-    //     leftNode->parent = currentNode;
-    // }
-
-
     
 }
 
@@ -168,114 +134,25 @@ void PieceTable::SplitNode(PTNode *currentNode, PTNode *leftNode, PTNode *rightN
 
 void PieceTable::RBInsertFixup(PTNode* z)
 {
-    if (!z) return;
 
-    while (z->parent && z->parent->color == Color::Red) {
-        PTNode* gp = z->parent->parent;
-
-        // Parent is root → just recolor parent (root) black and stop.
-        if (!gp) {
-            z->parent->color = Color::Black;
-            break;
-        }
-
-        if (z->parent == gp->left) {
-            PTNode* uncle = gp->right;
-
-            if (uncle && uncle->color == Color::Red) {
-                z->parent->color = Color::Black;
-                uncle->color     = Color::Black;
-                gp->color        = Color::Red;
-                z = gp;
-            } else {
-                if (z == z->parent->right) {
-                    z = z->parent;
-                    RotateLeft(z);
-                }
-                z->parent->color = Color::Black;
-                gp->color        = Color::Red;
-                RotateRight(gp);
-            }
-        } else {
-            PTNode* uncle = gp->left;
-
-            if (uncle && uncle->color == Color::Red) {
-                z->parent->color = Color::Black;
-                uncle->color     = Color::Black;
-                gp->color        = Color::Red;
-                z = gp;
-            } else {
-                if (z == z->parent->left) {
-                    z = z->parent;
-                    RotateRight(z);
-                }
-                z->parent->color = Color::Black;
-                gp->color        = Color::Red;
-                RotateLeft(gp);
-            }
-        }
-    }
-
-    if (root) root->color = Color::Black; // always enforce
 }
 
 
 void PieceTable::RotateLeft(PTNode* x) {
-    PTNode* y = x->right;
-    if (!y) return; // or assert(y)
 
-    x->right = y->left;
-    if (y->left) y->left->parent = x;
-
-    y->parent = x->parent;
-    if (!x->parent) {
-        root = y;
-    } else if (x == x->parent->left) {
-        x->parent->left = y;
-    } else {
-        x->parent->right = y;
-    }
-
-    y->left = x;
-    x->parent = y;
-
-    x->calcSubtreeLength();
-    y->calcSubtreeLength();
 }
 
 void PieceTable::RotateRight(PTNode *x)
 {
-    PTNode* y = x->left;
-    if (!y) return; // or assert(y)
 
-    // y's right subtree becomes x's left subtree
-    x->left = y->right;
-    if (y->right) y->right->parent = x;
-
-    // link y to x's parent
-    y->parent = x->parent;
-    if (!x->parent) {
-        root = y;
-    } else if (x == x->parent->right) {
-        x->parent->right = y;
-    } else {
-        x->parent->left = y;
-    }
-
-    // put x on y's right
-    y->right = x;
-    x->parent = y;
-
-    x->calcSubtreeLength();
-    y->calcSubtreeLength();
 }
 
 void PieceTable::DisplayTree(PTNode *currentNode)
 {
     
     currentNode->Print(GetNodesString(currentNode));
-    if(currentNode->left){DisplayTree(currentNode->left);}
-    if(currentNode->right){DisplayTree(currentNode->right);}
+    if(currentNode->left != NIL){DisplayTree(currentNode->left);}
+    if(currentNode->right != NIL){DisplayTree(currentNode->right);}
 }
 
 void PieceTable::Print()
