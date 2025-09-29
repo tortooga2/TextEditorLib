@@ -62,19 +62,21 @@ class PieceTable{
             if(!n || n == NIL) return;
 
             size_t new_subtree = 0;
-            if(n->left && n->left != NIL){
+            if( n->left != NIL){
                 new_subtree += n->left->subtree_len;
             }
-            std::cout << "Break point" << std::endl;
-            if(n->right && n->right != NIL){
+            
+            if( n->right != NIL){
                 new_subtree += n->right->subtree_len;
             }
             new_subtree += n->length;
             
             n->subtree_len = new_subtree;
-            if(n->parent){
+            
+            if(n->parent != NIL){
                 calcSubtreeLength(n->parent);
             }
+            
         }
 
 
